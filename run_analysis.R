@@ -1,6 +1,7 @@
 library(dplyr)
 library(reshape2)
 
+# Reads the data from the training and the test sets
 read_data<-function(){
   names<-read.table("UCI HAR Dataset/features.txt",sep="",header=F)
   
@@ -32,14 +33,22 @@ read_data<-function(){
   data
 }
 
+# Selects only the mean and the std columns
 select_data<-function(data){
   select(data, contains("mean.."),contains("std.."),Activity,Subject)
 }
 
+# Renames the activity codes with their textual representations
 rename_activity<-function(data){
   activity_labels<-read.table("UCI HAR Dataset/activity_labels.txt",sep="",header=F)
   data$Activity<-mapvalues(data$Activity, from = as.character(activity_labels$V1), to = as.character(activity_labels$V2))
   data
+}
+
+# Makes a tidy data set with the average of each variable for each activity and each subject.
+tidy_data<-function(data){
+  melted<-melt(data,id=c("Activity","Subject"))
+  dcast(melted,Activity+Subject~variable,mean)
 }
 
 data<-read_data()
@@ -47,8 +56,6 @@ selected_data<-select_data(data)
 
 renamed_data<-rename_activity(selected_data)
 
+tidy_data<-tidy_data(renamed_data)
 
-melted<-melt(renamed_data,id=c("Activity","Subject"))
-casted<-dcast(melted,Activity+Subject~variable,mean)
-
-write.table(casted,"tidy.txt",row.name=FALSE)
+write.table(tidy_data,"tidy.txt",row.name=FALSE)
